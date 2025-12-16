@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 
 import '../../../../injection_container.dart';
 import '../../domain/entities/note.dart';
@@ -21,10 +19,11 @@ class MapView extends StatefulWidget {
 class _MapViewState extends State<MapView> {
   final MapController _mapController = MapController();
   final List<Marker> _markers = [];
-  LatLng _initialCamera = LatLng(0, 0);
-  bool _loading = true;
 
-  LatLng? _userPosition; // Para mostrar la posición actual
+  LatLng _initialCamera = const LatLng(0, 0);
+  LatLng? _userPosition;
+
+  bool _loading = true;
   StreamSubscription<Position>? _positionStream;
 
   Marker? get _userMarker => _userPosition == null
@@ -33,16 +32,18 @@ class _MapViewState extends State<MapView> {
           point: _userPosition!,
           width: 50,
           height: 50,
-          child: const Icon(Icons.person_pin_circle, color: Colors.blue, size: 50),
+          child: const Icon(
+            Icons.person_pin_circle,
+            color: Colors.blue,
+            size: 50,
+          ),
         );
-
-  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _initLocationAndMarkers();
-    _startPositionStream(); // Inicia el seguimiento en tiempo real
+    _startPositionStream();
   }
 
   @override
@@ -63,119 +64,106 @@ class _MapViewState extends State<MapView> {
   }
 
   Future<void> _loadMarkers() async {
-    try {
-      final getNotes = sl<GetNotes>();
-      final notes = await getNotes();
-      _markers.clear();
-      for (var i = 0; i < notes.length; i++) {
-        final note = notes[i];
-        _markers.add(
-          Marker(
+    final getNotes = sl<GetNotes>();
+    final notes = await getNotes();
+
+    _markers
+      ..clear()
+      ..addAll(
+        notes.map(
+          (note) => Marker(
             point: LatLng(note.lat, note.lng),
             width: 40,
             height: 40,
-            child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+            child: GestureDetector(
+              onTap: () => _showNoteDialog(note),
+              child: const Icon(
+                Icons.location_on,
+                color: Colors.red,
+                size: 40,
+              ),
+            ),
           ),
-        );
-      }
-      setState(() {});
-    } catch (e) {
-      // ignore
-    }
+        ),
+      );
+
+    setState(() {});
+  }
+
+  void _showNoteDialog(Note note) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Nota'),
+        content: Text(note.text),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onMapLongPress(TapPosition tapPosition, LatLng pos) async {
     final controller = TextEditingController();
+
     final text = await showDialog<String?>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('New note'),
-        content: TextField(controller: controller, decoration: const InputDecoration(labelText: 'Text')),
+        title: const Text('Nueva nota'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Texto'),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(c).pop(), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.of(c).pop(controller.text.trim()), child: const Text('Save')),
+          TextButton(
+            onPressed: () => Navigator.pop(c),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(c, controller.text.trim()),
+            child: const Text('Guardar'),
+          ),
         ],
       ),
     );
 
     if (text != null && text.isNotEmpty) {
-      try {
-        final save = sl<SaveNote>();
-        await save(Note(text: text, lat: pos.latitude, lng: pos.longitude));
-        await _loadMarkers();
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error saving note')));
-      }
-    }
-  }
-
-  Future<void> _searchAddress(String query) async {
-    if (query.isEmpty) return;
-    final url = Uri.parse(
-      'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query)}&format=json&limit=1',
-    );
-
-    final response = await http.get(url, headers: {'User-Agent': 'com.tuapp'});
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data.isNotEmpty) {
-        final lat = double.parse(data[0]['lat']);
-        final lon = double.parse(data[0]['lon']);
-        _mapController.move(LatLng(lat, lon), 14);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Direction not found')));
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error looking for adress')));
+      final save = sl<SaveNote>();
+      await save(Note(text: text, lat: pos.latitude, lng: pos.longitude));
+      await _loadMarkers();
     }
   }
 
   void _startPositionStream() {
-    const locationSettings = LocationSettings(
+    const settings = LocationSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 5, // actualiza cada 5 metros
+      distanceFilter: 5,
     );
 
-    _positionStream = Geolocator.getPositionStream(locationSettings: locationSettings)
-        .listen((Position pos) {
-      setState(() {
-        _userPosition = LatLng(pos.latitude, pos.longitude);
-      });
-    });
+    _positionStream =
+        Geolocator.getPositionStream(locationSettings: settings).listen(
+      (pos) {
+        setState(() {
+          _userPosition = LatLng(pos.latitude, pos.longitude);
+        });
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Note Map'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      hintText: 'Buscar dirección...',
-                      border: OutlineInputBorder(),
-                      fillColor: Colors.white,
-                      filled: true,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: () => _searchAddress(_searchController.text),
-                ),
-              ],
-            ),
-          ),
-        ),
+        title: const Text('Mapa de Notas'),
       ),
       body: FlutterMap(
         mapController: _mapController,
