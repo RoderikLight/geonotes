@@ -99,9 +99,7 @@ Herramientas:
 
 ## ☁️ Servicios en la Nube (A Futuro)
 
-* Firebase / Supabase.
-* Sincronización de notas.
-* Backups en la nube.
+* Este proyecto utiliza Firebase como base de datos.
 
 ---
 
@@ -112,12 +110,6 @@ Se utiliza **Git Flow**:
 * `main`: versión estable.
 * `develop`: desarrollo activo.
 * `feature/*`: nuevas funcionalidades.
-
-Buenas prácticas:
-
-* Commits descriptivos.
-* Tags de liberación (`v1.0.0`).
-* Preparado para CI/CD.
 
 ---
 

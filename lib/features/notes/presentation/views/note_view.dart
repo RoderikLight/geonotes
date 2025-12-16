@@ -91,8 +91,9 @@ class _NotesViewState extends State<NotesView>
                     ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
-        onPressed: () {
-          Navigator.pushNamed(context, '/add');
+        onPressed: () async {
+          await Navigator.pushNamed(context, '/add');
+          presenter.loadNotes();
         },
       ),
     );

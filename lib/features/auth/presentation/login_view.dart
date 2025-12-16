@@ -15,15 +15,6 @@ class _LoginViewState extends State<LoginView> {
   bool loading = false;
   String? error;
 
-  Future<void> _signInAnon() async {
-    setState(() => loading = true);
-    try {
-      await sl<AuthService>().signInAnonymously();
-    } catch (e) {
-      setState(() { error = 'Anonymous sign-in failed'; loading = false; });
-    }
-  }
-
   Future<void> _signInEmail() async {
     setState(() => loading = true);
     try {
@@ -66,7 +57,6 @@ class _LoginViewState extends State<LoginView> {
             ElevatedButton(onPressed: loading ? null : _signInEmail, child: const Text('Sign in')),
             ElevatedButton(onPressed: loading ? null : _signUpEmail, child: const Text('Create account')),
             const Divider(),
-            ElevatedButton(onPressed: loading ? null : _signInAnon, child: const Text('Continue anonymously')),
           ],
         ),
       ),

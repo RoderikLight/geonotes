@@ -11,7 +11,7 @@ class AddNoteView extends StatefulWidget {
   State<AddNoteView> createState() => _AddNoteViewState();
 }
 
-class _AddNoteViewState extends State<AddNoteView> implements NotesViewContract {
+class _AddNoteViewState extends State<AddNoteView> {
   final TextEditingController _textCtrl = TextEditingController();
   late NotesPresenter presenter;
   bool loading = false;
@@ -21,12 +21,10 @@ class _AddNoteViewState extends State<AddNoteView> implements NotesViewContract 
   void initState() {
     super.initState();
     presenter = sl<NotesPresenter>();
-    presenter.attachView(this);
   }
 
   @override
   void dispose() {
-    presenter.detachView();
     _textCtrl.dispose();
     super.dispose();
   }
@@ -100,12 +98,7 @@ class _AddNoteViewState extends State<AddNoteView> implements NotesViewContract 
     );
   }
 
-  @override
-  void showNotes(List<Note> notes) {}
-  @override
-  void showError(String message) {
-    setState(() { error = message; loading = false; });
-  }
+  
 
   @override
   Widget build(BuildContext context) {
