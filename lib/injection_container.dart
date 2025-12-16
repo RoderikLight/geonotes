@@ -1,15 +1,20 @@
 import 'package:get_it/get_it.dart';
 
+import 'core/security/auth_service.dart';
+import 'features/notes/data/datasources/remote_data_source.dart';
+import 'features/notes/data/repositories/notes_repository_impl.dart';
+import 'features/notes/domain/repositories/notes_repository.dart';
+
 final sl = GetIt.instance;
 
-Future<void> init() async {
-  // Presenters
+void init() {
+  sl.registerLazySingleton<AuthService>(() => AuthService());
 
-  // Use cases
+  sl.registerLazySingleton<RemoteDataSource>(
+    () => RemoteDataSourceImpl(),
+  );
 
-  // Repository
-
-  // Data sources
-
-  // Core services
+  sl.registerLazySingleton<NotesRepository>(
+    () => NotesRepositoryImpl(sl()),
+  );
 }
