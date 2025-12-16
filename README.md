@@ -1,7 +1,6 @@
 # 📍 GeoNotes – GPS + Notes Mobile App
 
-Aplicación móvil desarrollada en **Flutter** que permite al usuario crear notas asociadas a una ubicación GPS específica. El proyecto fue desarrollado como caso de estudio académico aplicando **Metodología Ágil SCRUM**, **Clean Architecture** y el patrón de diseño **MVP**, dejando la base preparada para futuras integraciones con **APIs externas, servicios en la nube y mecanismos de seguridad**.
-
+Aplicación móvil desarrollada en **Flutter** que permite al usuario crear notas asociadas a una ubicación GPS específica. El proyecto fue desarrollado como caso de estudio académico aplicando **Metodología Ágil SCRUM**, **Clean Architecture** y el patrón de diseño **MVP**.
 ---
 
 ## 📌 Descripción del Proyecto
