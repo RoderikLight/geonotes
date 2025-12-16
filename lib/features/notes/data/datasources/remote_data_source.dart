@@ -2,32 +2,46 @@ import 'package:firebase_database/firebase_database.dart';
 import '../../domain/entities/note.dart';
 import '../models/note_model.dart';
 
-abstract class RemoteDataSource {
-  Future<void> saveNote(String userId, Note note);
-  Future<List<Note>> getNotes(String userId);
-}
+class RemoteDataSource {
+  final DatabaseReference db =
+      FirebaseDatabase.instance.refFromURL('https://geonotes-app-667eb-default-rtdb.firebaseio.com/notes');
 
-class RemoteDataSourceImpl implements RemoteDataSource {
-  final DatabaseReference _db =
-      FirebaseDatabase.instance.ref().child('notes');
-
-  @override
-  Future<void> saveNote(String userId, Note note) async {
-    final noteModel = NoteModel.fromEntity(note);
-    await _db.child(userId).push().set(noteModel.toJson());
+  Future<void> saveNote(Note note) async {
+    final model = NoteModel.fromEntity(note);
+    await db.push().set(model.toJson());
   }
 
-  @override
-  Future<List<Note>> getNotes(String userId) async {
-    final snapshot = await _db.child(userId).get();
+  Future<List<Note>> getNotes() async {
+    final snapshot = await db.get();
 
     if (!snapshot.exists) return [];
 
-    final data = snapshot.value as Map;
-    return data.values.map<Note>((e) {
+    final data = Map<String, dynamic>.from(snapshot.value as Map);
+
+    return data.entries.map<Note>((entry) {
       return NoteModel.fromJson(
-        Map<String, dynamic>.from(e),
+        Map<String, dynamic>.from(entry.value),
       ).toEntity();
     }).toList();
+  }
+
+  Future<void> deleteNote(Note note) async {
+    final snapshot = await db.get();
+    if (!snapshot.exists) return;
+
+    final data = Map<String, dynamic>.from(snapshot.value as Map);
+
+    for (final entry in data.entries) {
+      final model = NoteModel.fromJson(
+        Map<String, dynamic>.from(entry.value),
+      );
+
+      if (model.text == note.text &&
+          model.lat == note.lat &&
+          model.lng == note.lng) {
+        await db.child(entry.key).remove();
+        break;
+      }
+    }
   }
 }

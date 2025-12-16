@@ -8,12 +8,17 @@ class NotesRepositoryImpl implements NotesRepository {
   NotesRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<void> saveNote(String userId, Note note) {
-    return remoteDataSource.saveNote(userId, note);
+  Future<void> saveNote(Note note) async {
+    await remoteDataSource.saveNote(note);
   }
 
   @override
-  Future<List<Note>> getNotes(String userId) {
-    return remoteDataSource.getNotes(userId);
+  Future<List<Note>> getNotes() async {
+    return await remoteDataSource.getNotes();
+  }
+
+  @override
+  Future<void> deleteNote(Note note) async {
+    await remoteDataSource.deleteNote(note);
   }
 }
