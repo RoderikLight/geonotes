@@ -10,14 +10,11 @@ GeoNotes es una aplicación móvil que permite:
 
 * Registrar notas manuales.
 * Asociar cada nota con coordenadas GPS (latitud y longitud).
-* Almacenar la información de forma local.
+* Almacenar la información en firebase por usuario independiente.
 * Visualizar notas vinculadas a ubicaciones específicas.
-
-La aplicación está diseñada para escalar a futuro, permitiendo:
-
-* Integración con APIs externas (Google Maps, OpenStreetMap).
+* Integración con APIs externas de FireBase.
 * Sincronización en la nube.
-* Autenticación de usuarios.
+* Sistema de sesion.
 
 ---
 
@@ -89,15 +86,14 @@ Herramientas:
 
 ---
 
-## 🔐 Seguridad (Preparado)
+## 🔐 Seguridad 
 
-* Arquitectura preparada para autenticación.
 * Manejo seguro de permisos (GPS).
-* Posible integración con OAuth / JWT a futuro.
+* integración con FirebaseAuth.
 
 ---
 
-## ☁️ Servicios en la Nube (A Futuro)
+## ☁️ Servicios en la Nube 
 
 * Este proyecto utiliza Firebase como base de datos.
 
@@ -166,7 +162,7 @@ Joel Rodrigo Salcedo Cheno
 
 ## 📌 Estado del Proyecto
 
-🚧 En desarrollo – Base arquitectónica implementada.
+🚧 Completado!.
 
 ---
 
