@@ -1,31 +1,54 @@
 import 'package:firebase_database/firebase_database.dart';
+import '../../domain/entities/note.dart';
+import '../models/note_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-abstract class RemoteDataSource {
-  Future<void> addNote({
-    required String text,
-    required double lat,
-    required double lng,
-  });
-}
+class RemoteDataSource {
+  DatabaseReference _userRef() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      throw Exception('User not authenticated - cannot access remote notes');
+    }
+    final path = 'notes/$uid';
+    return FirebaseDatabase.instance.ref(path);
+  }
 
-class RemoteDataSourceImpl implements RemoteDataSource {
-  final DatabaseReference _db =
-      FirebaseDatabase.instance.ref('notes');
+  Future<void> saveNote(Note note) async {
+    final model = NoteModel.fromEntity(note);
+    await _userRef().push().set(model.toJson());
+  }
 
-  @override
-  Future<void> addNote({
-    required String text,
-    required double lat,
-    required double lng,
-  }) async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+  Future<List<Note>> getNotes() async {
+    final snapshot = await _userRef().get();
 
-    await _db.child(uid).push().set({
-      'text': text,
-      'lat': lat,
-      'lng': lng,
-      'timestamp': DateTime.now().toIso8601String(),
-    });
+    if (!snapshot.exists) return [];
+
+    final data = Map<String, dynamic>.from(snapshot.value as Map);
+
+    return data.entries.map<Note>((entry) {
+      return NoteModel.fromJson(
+        Map<String, dynamic>.from(entry.value),
+      ).toEntity();
+    }).toList();
+  }
+
+  Future<void> deleteNote(Note note) async {
+    final snapshot = await _userRef().get();
+    if (!snapshot.exists) return;
+
+    final data = Map<String, dynamic>.from(snapshot.value as Map);
+
+    for (final entry in data.entries) {
+      final model = NoteModel.fromJson(
+        Map<String, dynamic>.from(entry.value),
+      );
+
+      if (model.text == note.text &&
+          model.lat == note.lat &&
+          model.lng == note.lng) {
+        await _userRef().child(entry.key).remove();
+        break;
+      }
+    }
   }
 }

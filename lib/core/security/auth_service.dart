@@ -8,8 +8,14 @@ class AuthService {
   Stream<User?> get authStateChanges =>
       _firebaseAuth.authStateChanges();
 
-  Future<User?> signInAnonymously() async {
-    final result = await _firebaseAuth.signInAnonymously();
+
+  Future<User?> signInWithEmail(String email, String password) async {
+    final result = await _firebaseAuth.signInWithEmailAndPassword(email: email, password: password);
+    return result.user;
+  }
+
+  Future<User?> registerWithEmail(String email, String password) async {
+    final result = await _firebaseAuth.createUserWithEmailAndPassword(email: email, password: password);
     return result.user;
   }
 
