@@ -44,7 +44,6 @@ class _AddNoteViewState extends State<AddNoteView> {
     }
 
     if (permission == LocationPermission.deniedForever) {
-      // Permissions are denied forever, handle appropriately.
       throw Exception('Location permissions are permanently denied');
     }
 
@@ -60,14 +59,6 @@ class _AddNoteViewState extends State<AddNoteView> {
       await presenter.addNote(note);
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      final msg = e.toString() ?? 'Error saving note';
-      setState(() {
-        error = msg.contains('permanently')
-            ? 'Location permission permanently denied. Open settings to enable.'
-            : msg;
-        loading = false;
-      });
-
       if (e.toString().contains('permanently')) {
         // Offer to open app settings
         _showOpenSettingsDialog();

@@ -22,7 +22,23 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'GeoNotes',
-      theme: ThemeData(primarySwatch: Colors.blue),
+
+      // 🎨 TEMA GLOBAL
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blueAccent,
+          brightness: Brightness.light,
+        ),
+        textTheme: const TextTheme(
+          headlineMedium: TextStyle(fontWeight: FontWeight.bold),
+          bodyMedium: TextStyle(fontSize: 16),
+        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: Colors.white,
+        ),
+      ),
+
       routes: {
         '/add': (c) => const AddNoteView(),
         '/map': (c) => const MapView(),
@@ -51,42 +67,26 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _initializeApp() async {
     try {
-      // Inicializar Firebase solo si no hay apps
-      try {
-        if (Firebase.apps.isEmpty) {
-          await Firebase.initializeApp(
-            options: const FirebaseOptions(
-              apiKey: "AIzaSyBUhdtR614vo6QIIMMhS-oV2GzMbLcBBKo",
-              authDomain: "geonotes-app-667eb.firebaseapp.com",
-              projectId: "geonotes-app-667eb",
-              storageBucket: "geonotes-app-667eb.firebasestorage.app",
-              messagingSenderId: "7657832372",
-              appId: "1:7657832372:web:c75cd6653e6307a1d37ce1",
-              databaseURL:
-                  "https://geonotes-app-667eb-default-rtdb.firebaseio.com",
-            ),
-          );
-          print('Firebase inicializado');
-        } else {
-          print('Firebase ya estaba inicializado: ${Firebase.apps.map((a) => a.name).toList()}');
-        }
-      } on FirebaseException catch (e) {
-        if (e.code == 'duplicate-app') {
-          print('Firebase ya estaba inicializado, usando instancia existente');
-        } else {
-          rethrow;
-        }
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: const FirebaseOptions(
+            apiKey: "AIzaSyBUhdtR614vo6QIIMMhS-oV2GzMbLcBBKo",
+            authDomain: "geonotes-app-667eb.firebaseapp.com",
+            projectId: "geonotes-app-667eb",
+            storageBucket: "geonotes-app-667eb.firebasestorage.app",
+            messagingSenderId: "7657832372",
+            appId: "1:7657832372:web:c75cd6653e6307a1d37ce1",
+            databaseURL:
+                "https://geonotes-app-667eb-default-rtdb.firebaseio.com",
+          ),
+        );
       }
 
-      // Inicialización de inyección de dependencias
       init();
 
-      // Comprobar permisos de ubicación
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        errorMessage = 'Servicio de localización no habilitado.';
-        setState(() {});
-        return;
+        throw Exception('Servicio de localización no habilitado.');
       }
 
       LocationPermission permission = await Geolocator.checkPermission();
@@ -94,13 +94,11 @@ class _SplashScreenState extends State<SplashScreen> {
         permission = await Geolocator.requestPermission();
       }
       if (permission == LocationPermission.deniedForever) {
-        errorMessage =
-            'Permisos de ubicación denegados permanentemente. Actívelos en ajustes.';
-        setState(() {});
-        return;
+        throw Exception(
+          'Permisos de ubicación denegados permanentemente.',
+        );
       }
 
-      // Navegar a la pantalla principal según autenticación
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -112,39 +110,71 @@ class _SplashScreenState extends State<SplashScreen> {
                   body: Center(child: CircularProgressIndicator()),
                 );
               }
-              if (snapshot.hasData) {
-                return const NotesView();
-              }
-              return const LoginView();
+              return snapshot.hasData
+                  ? const NotesView()
+                  : const LoginView();
             },
           ),
         ),
       );
-    } catch (e, st) {
-      print('Error al inicializar la app: $e');
-      print('Stack trace:\n$st');
-      errorMessage = 'Error al inicializar la app: $e';
-      setState(() {});
+    } catch (e) {
+      setState(() => errorMessage = e.toString());
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: errorMessage != null
-            ? Text(errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red))
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 20),
-                  Text('Cargando GeoNotes...',
-                      style: TextStyle(fontSize: 18)),
-                ],
-              ),
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blueAccent, Colors.indigo],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: errorMessage != null
+              ? Card(
+                  margin: const EdgeInsets.all(24),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline,
+                            color: Colors.red, size: 48),
+                        const SizedBox(height: 16),
+                        Text(
+                          errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.location_on,
+                        size: 80, color: Colors.white),
+                    SizedBox(height: 20),
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text(
+                      'Cargando GeoNotes...',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }
